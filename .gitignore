@@ -25,3 +25,9 @@
 *.exe
 *.out
 *.app
+
+# Folders
+.vscode
+.idea
+build
+config.hpp
