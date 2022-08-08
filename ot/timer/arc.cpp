@@ -90,8 +90,8 @@ void Arc::_fprop_slew() {
     // Case 1: Net arc
     [this] (Net* net) {
       FOR_EACH_EL_RF(el, rf) {
-        if(_from._slew[el][rf]) {
-          if(auto so = net->_slew(el, rf, *(_from._slew[el][rf]), _to); so) {
+        if (_from._slew[el][rf]) {
+          if (auto so = net->_slew(el, rf, *(_from._slew[el][rf]), _to); so) {
             _to._relax_slew(this, el, rf, el, rf, *so);
           }
         }
@@ -101,7 +101,7 @@ void Arc::_fprop_slew() {
     [this] (TimingView tv) {
       FOR_EACH_EL_RF_RF_IF(el, frf, trf, (tv[el] && _from._slew[el][frf])) {
         auto lc = (_to._net) ? _to._net->_load(el, trf) : 0.0f;
-        if(auto so = tv[el]->slew(frf, trf, *_from._slew[el][frf], lc); so) {
+        if (auto so = tv[el]->slew(frf, trf, *_from._slew[el][frf], lc); so) {
           _to._relax_slew(this, el, frf, el, trf, *so);
         }
       }

@@ -46,9 +46,3 @@ inline const std::string& Gate::name() const {
 };  // end of namespace ot. -----------------------------------------------------------------------
 
 #endif
-
-
-
-
-
-
