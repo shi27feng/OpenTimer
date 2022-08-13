@@ -22,7 +22,7 @@ void Timer::_add_to_lineage(tf::Task task) {
 
 // Function: _max_pin_name_size
 size_t Timer::_max_pin_name_size() const {
-  if(_pins.empty()) {
+  if (_pins.empty()) {
     return 0;
   }
   else {
@@ -36,7 +36,7 @@ size_t Timer::_max_pin_name_size() const {
 
 // Function: _max_net_name_size
 size_t Timer::_max_net_name_size() const {
-  if(_nets.empty()) {
+  if (_nets.empty()) {
     return 0;
   }
   else {
@@ -71,7 +71,7 @@ void Timer::_repower_gate(const std::string& gname, const std::string& cname) {
   OT_LOGE_RIF(!_celllib[MIN] || !_celllib[MAX], "celllib not found");
 
   // Insert the gate if it doesn't exist.
-  if(auto gitr = _gates.find(gname); gitr == _gates.end()) {
+  if (auto gitr = _gates.find(gname); gitr == _gates.end()) {
     OT_LOGW("gate ", gname, " doesn't exist (insert instead)");
     _insert_gate(gname, cname);
     return;
@@ -85,10 +85,10 @@ void Timer::_repower_gate(const std::string& gname, const std::string& cname) {
     auto& gate = gitr->second;
 
     // Remap the cellpin
-    for(auto pin : gate._pins) {
+    for (auto pin : gate._pins) {
       FOR_EACH_EL(el) {
         assert(pin->cellpin(el));
-        if(const auto cpin = cell[el]->cellpin(pin->cellpin(el)->name)) {
+        if (const auto cpin = cell[el]->cellpin(pin->cellpin(el)->name)) {
           pin->_remap_cellpin(el, *cpin);
         }
         else {
@@ -106,9 +106,9 @@ void Timer::_repower_gate(const std::string& gname, const std::string& cname) {
     _insert_gate_arcs(gate);
 
     // Insert the gate to the frontier
-    for(auto pin : gate._pins) {
+    for (auto pin : gate._pins) {
       _insert_frontier(*pin);
-      for(auto arc : pin->_fanin) {
+      for (auto arc : pin->_fanin) {
         _insert_frontier(arc->_from);
       }
     }
@@ -136,14 +136,14 @@ void Timer::_insert_gate(const std::string& gname, const std::string& cname) {
 
   OT_LOGE_RIF(!_celllib[MIN] || !_celllib[MAX], "celllib not found");
 
-  if(_gates.find(gname) != _gates.end()) {
+  if (_gates.find(gname) != _gates.end()) {
     OT_LOGW("gate ", gname, " already existed");
     return;
   }
 
   auto cell = CellView {_celllib[MIN]->cell(cname), _celllib[MAX]->cell(cname)};
 
-  if(!cell[MIN] || !cell[MAX]) {
+  if (!cell[MIN] || !cell[MAX]) {
     OT_LOGE("cell ", cname, " not found in celllib");
     return;
   }
@@ -151,11 +151,11 @@ void Timer::_insert_gate(const std::string& gname, const std::string& cname) {
   auto& gate = _gates.try_emplace(gname, gname, cell).first->second;
   
   // Insert pins
-  for(const auto& [cpname, ecpin] : cell[MIN]->cellpins) {
+  for (const auto& [cpname, ecpin] : cell[MIN]->cellpins) {
 
     CellpinView cpv {&ecpin, cell[MAX]->cellpin(cpname)};
 
-    if(!cpv[MIN] || !cpv[MAX]) {
+    if (!cpv[MIN] || !cpv[MAX]) {
       OT_LOGF("cellpin ", cpname, " mismatched in celllib");
     }
 
@@ -181,7 +181,7 @@ Timer& Timer::remove_gate(std::string gate) {
   std::scoped_lock lock(_mutex);
 
   auto op = _taskflow.emplace([this, gate=std::move(gate)] () {
-    if(auto gitr = _gates.find(gate); gitr != _gates.end()) {
+    if (auto gitr = _gates.find(gate); gitr != _gates.end()) {
       _remove_gate(gitr->second);
     }
   });
@@ -195,7 +195,7 @@ Timer& Timer::remove_gate(std::string gate) {
 void Timer::_remove_gate(Gate& gate) {
 
   // Disconnect this gate from the design.
-  for(auto pin : gate._pins) {
+  for (auto pin : gate._pins) {
     _disconnect_pin(*pin);
   }
 
@@ -710,7 +710,7 @@ Arc& Timer::_insert_arc(Pin& from, Pin& to, TimingView tv) {
 
 // Procedure: _fprop_rc_timing
 void Timer::_fprop_rc_timing(Pin& pin) {
-  if(auto net = pin._net; net) {
+  if (auto net = pin._net; net) {
     net->_update_rc_timing();
   }
 }
@@ -729,7 +729,7 @@ void Timer::_fprop_slew(Pin& pin) {
   }
   
   // Relax the slew from its fanin.
-  for(auto arc : pin._fanin) {
+  for (auto arc : pin._fanin) {
     arc->_fprop_slew();
   }
 }
@@ -738,12 +738,12 @@ void Timer::_fprop_slew(Pin& pin) {
 void Timer::_fprop_delay(Pin& pin) {
 
   // clear delay
-  for(auto arc : pin._fanin) {
+  for (auto arc : pin._fanin) {
     arc->_reset_delay();
   }
 
   // Compute the delay from its fanin.
-  for(auto arc : pin._fanin) {
+  for (auto arc : pin._fanin) {
     arc->_fprop_delay();
   }
 }
@@ -755,14 +755,14 @@ void Timer::_fprop_at(Pin& pin) {
   pin._reset_at();
 
   // PI
-  if(auto pi = pin.primary_input(); pi) {
+  if (auto pi = pin.primary_input(); pi) {
     FOR_EACH_EL_RF_IF(el, rf, pi->_at[el][rf]) {
       pin._relax_at(nullptr, el, rf, el, rf, *(pi->_at[el][rf]));
     }
   }
 
   // Relax the at from its fanin.
-  for(auto arc : pin._fanin) {
+  for (auto arc : pin._fanin) {
     arc->_fprop_at();
   }
 }
@@ -771,20 +771,20 @@ void Timer::_fprop_at(Pin& pin) {
 void Timer::_fprop_test(Pin& pin) {
   
   // reset tests
-  for(auto test : pin._tests) {
+  for (auto test : pin._tests) {
     test->_reset();
   }
   
   // Obtain the rat
-  if(!_clocks.empty()) {
+  if (!_clocks.empty()) {
 
     // Update the rat
-    for(auto test : pin._tests) {
+    for (auto test : pin._tests) {
       // TODO: currently we assume a single clock...
       test->_fprop_rat(_clocks.begin()->second._period);
       
       // compute the cppr credit if any
-      if(_cppr_analysis) {
+      if (_cppr_analysis) {
         FOR_EACH_EL_RF_IF(el, rf, test->raw_slack(el, rf)) {
           test->_cppr_credit[el][rf] = _cppr_credit(*test, el, rf);
         }
@@ -799,16 +799,16 @@ void Timer::_bprop_rat(Pin& pin) {
   pin._reset_rat();
 
   // PO
-  if(auto po = pin.primary_output(); po) {
+  if (auto po = pin.primary_output(); po) {
     FOR_EACH_EL_RF_IF(el, rf, po->_rat[el][rf]) {
       pin._relax_rat(nullptr, el, rf, el, rf, *(po->_rat[el][rf]));
     }
   }
 
   // Test
-  for(auto test : pin._tests) {
+  for (auto test : pin._tests) {
     FOR_EACH_EL_RF_IF(el, rf, test->_rat[el][rf]) {
-      if(test->_cppr_credit[el][rf]) {
+      if (test->_cppr_credit[el][rf]) {
         pin._relax_rat(
           &test->_arc, el, rf, el, rf, *test->_rat[el][rf] + *test->_cppr_credit[el][rf]
         );
@@ -820,7 +820,7 @@ void Timer::_bprop_rat(Pin& pin) {
   }
 
   // Relax the rat from its fanout.
-  for(auto arc : pin._fanout) {
+  for (auto arc : pin._fanout) {
     arc->_bprop_rat();
   }
 }
@@ -833,11 +833,11 @@ void Timer::_build_fprop_cands(Pin& from) {
 
   from._insert_state(Pin::FPROP_CAND | Pin::IN_FPROP_STACK);
 
-  for(auto arc : from._fanout) {
-    if(auto& to = arc->_to; !to._has_state(Pin::FPROP_CAND)) {
+  for (auto arc : from._fanout) {
+    if (auto& to = arc->_to; !to._has_state(Pin::FPROP_CAND)) {
       _build_fprop_cands(to);
     }
-    else if(to._has_state(Pin::IN_FPROP_STACK)) {
+    else if (to._has_state(Pin::IN_FPROP_STACK)) {
       _scc_analysis = true;
     }
   }
@@ -855,12 +855,12 @@ void Timer::_build_bprop_cands(Pin& to) {
   to._insert_state(Pin::BPROP_CAND | Pin::IN_BPROP_STACK);
 
   // add pin to scc
-  if(_scc_analysis && to._has_state(Pin::FPROP_CAND) && !to._scc) {
+  if (_scc_analysis && to._has_state(Pin::FPROP_CAND) && !to._scc) {
     _scc_cands.push_back(&to);
   }
 
-  for(auto arc : to._fanin) {
-    if(auto& from=arc->_from; !from._has_state(Pin::BPROP_CAND)) {
+  for (auto arc : to._fanin) {
+    if (auto& from=arc->_from; !from._has_state(Pin::BPROP_CAND)) {
       _build_bprop_cands(from);
     }
   }
@@ -875,29 +875,29 @@ void Timer::_build_prop_cands() {
   _scc_analysis = false;
 
   // Discover all fprop candidates.
-  for(const auto& ftr : _frontiers) {
-    if(ftr->_has_state(Pin::FPROP_CAND)) {
+  for (const auto& ftr : _frontiers) {
+    if (ftr->_has_state(Pin::FPROP_CAND)) {
       continue;
     }
     _build_fprop_cands(*ftr);
   }
 
   // Discover all bprop candidates.
-  for(auto fcand : _fprop_cands) {
+  for (auto fcand : _fprop_cands) {
 
-    if(fcand->_has_state(Pin::BPROP_CAND)) {
+    if (fcand->_has_state(Pin::BPROP_CAND)) {
       continue;
     }
 
     _scc_cands.clear();
     _build_bprop_cands(*fcand);
 
-    if(!_scc_analysis) {
+    if (!_scc_analysis) {
       assert(_scc_cands.empty());
     }
     
     // here dfs returns with exacly one scc if exists
-    if(auto& c = _scc_cands; c.size() >= 2 || (c.size() == 1 && c[0]->has_self_loop())) {
+    if (auto& c = _scc_cands; c.size() >= 2 || (c.size() == 1 && c[0]->has_self_loop())) {
       auto& scc = _insert_scc(c);
       scc._unloop();
     }
@@ -915,7 +915,7 @@ void Timer::_build_prop_tasks() {
   // (2) propagate the slew 
   // (3) propagate the delay
   // (4) propagate the arrival time.
-  for(auto pin : _fprop_cands) {
+  for (auto pin : _fprop_cands) {
     assert(!pin->_ftask);
     pin->_ftask = _taskflow.emplace([this, pin] () {
       _fprop_rc_timing(*pin);
@@ -927,12 +927,12 @@ void Timer::_build_prop_tasks() {
   }
   
   // Build the dependency
-  for(auto to : _fprop_cands) {
-    for(auto arc : to->_fanin) {
-      if(arc->_has_state(Arc::LOOP_BREAKER)) {
+  for (auto to : _fprop_cands) {
+    for (auto arc : to->_fanin) {
+      if (arc->_has_state(Arc::LOOP_BREAKER)) {
         continue;
       }
-      if(auto& from = arc->_from; from._has_state(Pin::FPROP_CAND)) {
+      if (auto& from = arc->_from; from._has_state(Pin::FPROP_CAND)) {
         from._ftask->precede(to->_ftask.value());
       }
     }
@@ -940,7 +940,7 @@ void Timer::_build_prop_tasks() {
 
   // Emplace the bprop task
   // (1) propagate the required arrival time
-  for(auto pin : _bprop_cands) {
+  for (auto pin : _bprop_cands) {
     assert(!pin->_btask);
     pin->_btask = _taskflow.emplace([this, pin] () {
       _bprop_rat(*pin);
@@ -948,20 +948,20 @@ void Timer::_build_prop_tasks() {
   }
 
   // Build the task dependencies.
-  for(auto to : _bprop_cands) {
-    for(auto arc : to->_fanin) {
-      if(arc->_has_state(Arc::LOOP_BREAKER)) {
+  for (auto to : _bprop_cands) {
+    for (auto arc : to->_fanin) {
+      if (arc->_has_state(Arc::LOOP_BREAKER)) {
         continue;
       }
-      if(auto& from = arc->_from; from._has_state(Pin::BPROP_CAND)) {
+      if (auto& from = arc->_from; from._has_state(Pin::BPROP_CAND)) {
         to->_btask->precede(from._btask.value());
       }
     } 
   }
 
   // Connect with ftasks
-  for(auto pin : _bprop_cands) {
-    if(pin->_btask->num_dependents() == 0 && pin->_ftask) {
+  for (auto pin : _bprop_cands) {
+    if (pin->_btask->num_dependents() == 0 && pin->_ftask) {
       pin->_ftask->precede(pin->_btask.value()); 
     }
   }
@@ -1516,7 +1516,6 @@ void Timer::_set_load(PrimaryOutput& po, Split m, Tran t, std::optional<float> v
   }
   _insert_frontier(po._pin);
 }
-
 
 };  // end of namespace ot. -----------------------------------------------------------------------
 

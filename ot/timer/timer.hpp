@@ -490,7 +490,3 @@ inline auto Timer::_remove_state(int s) {
 };  // end of namespace ot ------------------------------------------------------------------------
 
 #endif
-
-
-
-

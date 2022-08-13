@@ -4,21 +4,21 @@ namespace ot {
 
 // Procedure: scale_time
 void Cell::scale_time(float s) {
-  for(auto& kvp : cellpins) {
+  for (auto& kvp : this->cellpins) {
     kvp.second.scale_time(s);
   }
 }
 
 // Procedure: scale_capacitance
 void Cell::scale_capacitance(float s) {
-  for(auto& kvp : cellpins) {
+  for (auto& kvp : cellpins) {
     kvp.second.scale_capacitance(s);
   }
 }
 
 // Function: cellpin
 const Cellpin* Cell::cellpin(const std::string& name) const {
-  if(auto itr = cellpins.find(name); itr == cellpins.end()) {
+  if (auto itr = cellpins.find(name); itr == cellpins.end()) {
     return nullptr;
   }
   else return &(itr->second);
